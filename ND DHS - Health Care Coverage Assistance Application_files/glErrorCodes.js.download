@@ -1,0 +1,58 @@
+/**********************************************************************************
+		File Name	: glErrorCodes.js		
+		Track		: FRAMEWORK
+		Functional	: GLOBAL
+		Description : Client Side Error Codes and Messages Mapping Details
+/**********************************************************************************/
+
+var glErrorCodes = new Array();
+glErrorCodes.push(new Array("GL001","Data Required. Please Enter Data in '~' field."));
+glErrorCodes.push(new Array("GL002","Please enter valid characters for '~' field. Do not enter numbers"));
+glErrorCodes.push(new Array("GL003","Please enter numeric values for '~' field."));
+glErrorCodes.push(new Array("GL004","Invalid Entry. Valid Entry can only be Alpha Numeric and spaces for '~' field."));
+glErrorCodes.push(new Array("GL005","Invalid Entry. Valid entry can only be Alpha Numeric for '~' field."));
+glErrorCodes.push(new Array("GL006","Please enter all digits for '~' field."));
+glErrorCodes.push(new Array("GL007","Please enter valid ~ amount for '~' field."));
+glErrorCodes.push(new Array("GL008","Enter either ~ to complete the search."));
+glErrorCodes.push(new Array("GL009","Either '~' or '~' should be entered."));
+glErrorCodes.push(new Array("GL010","Please enter the complete data in '~' field."));
+glErrorCodes.push(new Array("GL011","Please enter the complete Zip Code for '~' field."));
+glErrorCodes.push(new Array("GL012","Please enter a valid name for '~' field."));
+glErrorCodes.push(new Array("GL013","Please enter valid date in the '~' field."));
+glErrorCodes.push(new Array("GL014","'~' can't be prior to today."));
+glErrorCodes.push(new Array("GL015","'~' can't be today or prior to today."));
+glErrorCodes.push(new Array("GL016","'~' cannot be later than today."));
+glErrorCodes.push(new Array("GL017","'~' can't be prior to '~'."));
+glErrorCodes.push(new Array("GL018","'~'  can't be equal or prior to '~'."));
+glErrorCodes.push(new Array("GL019","'~' can't start with zero."));
+glErrorCodes.push(new Array("GL020","Please remove space in the beginning for '~' field."));
+glErrorCodes.push(new Array("GL021","Max. allowed is '~' chars in '~' field."));
+glErrorCodes.push(new Array("GL022","'~' can't be Zero."));
+glErrorCodes.push(new Array("GL023","Please do not enter special characters '~' field."));
+glErrorCodes.push(new Array("GL024","The Street, City, State, and Zip Code must have values if any piece of the address is entered."));
+glErrorCodes.push(new Array("GL025","'~' cannot have value greater than '~'.")); 
+glErrorCodes.push(new Array("GL026","Target frame incorrectly specified. The Specified target '~' does not exist."));
+glErrorCodes.push(new Array("GL027","'~' cannot be greater than '~' years."));
+glErrorCodes.push(new Array("GL028","'~' chars are not allowed in field '~'."));
+glErrorCodes.push(new Array("GL029","Please enter valid SSN number."));
+glErrorCodes.push(new Array("GL030","A record with same '~' already exists."));
+glErrorCodes.push(new Array("GL031","Please enter data in atleast one of the '~' fields")); 
+glErrorCodes.push(new Array("GL032","Please enter data in  '~' fields"));
+
+// new error codes for cares worker web
+glErrorCodes.push(new Array("GL033","Please enter '~' when '~' is '~'."));
+glErrorCodes.push(new Array("GL034","Please do not enter '~' field when '~' is not entered"));
+glErrorCodes.push(new Array("GL035","This date cannot be greater than '~' by '~' '~'."));
+glErrorCodes.push(new Array("GL036","If '~' is entered, '~' is required."));
+glErrorCodes.push(new Array("GL037","Please enter '~' date between '~' and '~'."));
+glErrorCodes.push(new Array("GL038","Please select an entry for '~'."));
+glErrorCodes.push(new Array("GL039","Please enter a valid dollar amount less than '~'"));
+glErrorCodes.push(new Array("GL040","Invalid first character entered for '~'."));
+glErrorCodes.push(new Array("GL041","'~' is the same as '~'.")); //only server side validation
+glErrorCodes.push(new Array("GL042","'~' cannot be Y when '~' is N"));
+glErrorCodes.push(new Array("GL043","'~' must not be entered when '~' is '~'."));
+glErrorCodes.push(new Array("GL044","You cannot Delete a row while Editing a Row.Please Save data and attempt deletion."));
+glErrorCodes.push(new Array("GL045","No Data available for submit"));
+glErrorCodes.push(new Array("GL046","DynaList fields '~' needs to be empty."));
+// dynasection message
+glErrorCodes.push(new Array("GL120","You cannot click 'Add' when one section is completely empty.","1"));

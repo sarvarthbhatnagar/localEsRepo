@@ -1,0 +1,21 @@
+$(document).ready(function(){
+	var browserURL = window.location;
+	var autoRefreshRegExp = new RegExp("#refresh");
+	if(autoRefreshRegExp.test(browserURL)){
+	    $("#errorSpanClient").hide();
+	    //window.location = window.location.href.replace("#refresh","");
+	    window.location.hash='';
+	}
+});
+//Commented as a fix to page reload - mobile compatibility
+$(window).on("orientationchange", function(event){
+	/*var autoRefreshRegExp = new RegExp("#refresh");
+	var cleanupRegExp = new RegExp("#");
+	
+	if(cleanupRegExp.test(window.location.href)){
+		window.location = window.location.href.replace("#","#refresh");
+	}else if(!autoRefreshRegExp.test(window.location.href)){
+		window.location = window.location.href + "#refresh";
+	}
+    location.reload(true);*/
+});

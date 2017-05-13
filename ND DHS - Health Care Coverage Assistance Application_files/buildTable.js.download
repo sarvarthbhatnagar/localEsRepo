@@ -1,0 +1,605 @@
+/**
+ * Dynamic Table for SSP
+ * Author: nishrao
+ * Date: 11/18/2016
+ */
+var fullJSON;
+var tableDataJSON;
+var colId;
+var colNames;
+var colWidth;
+var rowData;
+var rtInfo;
+var updatedRows;
+var deletedRows;
+var insertedRows;
+var noChangeRows;
+
+var maxlengths;
+var leftPanelCols;
+
+var divIds = new Array();
+
+function setFullJSON(jsonText){
+	try{
+	fullJSON = JSON.parse(jsonText);
+	if(divIds.length==0 && fullJSON!=null)
+		divIds = new Array(fullJSON.length);
+	}catch(e){}
+}
+
+function init(tableNo){
+	tableDataJSON = fullJSON[tableNo];
+	colId = tableDataJSON['colId'];
+	colNames = tableDataJSON['colNames'];
+	colWidth = tableDataJSON['colWidth'];
+	rowData = tableDataJSON['rowData'];
+	rtInfo = tableDataJSON['rtInfo'];
+	
+	updatedRows = tableDataJSON['updatedRows'];
+	deletedRows = tableDataJSON['deletedRows'];
+	insertedRows = tableDataJSON['insertedRows'];
+	noChangeRows = tableDataJSON['noChangeRows'];
+	
+	maxlengths = tableDataJSON['maxlengths'];
+	leftPanelCols = tableDataJSON['leftPanelCols'];
+}
+
+function getTableHeader()
+{
+	var str = '';
+	str += '<tr>';
+	for(var x in colNames){
+		if(colWidth[x]!=0){
+			var colName = colNames[x].split(':')[0];
+			str += '<th width="'+colWidth[x]+'px" class="HeaderBar">';
+			str += '<div class="clickable" tabindex="-1"><center>';
+			str += colName;
+			str += '</center></div></th>';
+		}
+	}
+	//one more column for add/delete button
+	str += '<th width="50px" class="HeaderBar"><label><font color="#3380CC">action"</font></label></th>';
+	str += '</tr>';
+	
+	return str;
+}
+
+function getTableRows(tableNo)
+{
+	var str = '';
+	var rowCount = 0;
+	for(var i in rowData){
+		var row = rowData[i];
+		var sourceAppInd = row[colId.indexOf('sourceAppInd')];
+		if("CW" != sourceAppInd){
+			
+			var maxRowId = fullJSON[tableNo]['maxRowId'];
+			if(maxRowId == null || maxRowId == undefined || maxRowId == 0){
+				fullJSON[tableNo]['maxRowId'] = row[colId.indexOf('rowid')];
+			}
+			else{
+				if(maxRowId < row[colId.indexOf('rowid')])
+				{
+					fullJSON[tableNo]['maxRowId'] = row[colId.indexOf('rowid')];
+				}
+			}
+			
+			str += '<tr>';
+			for(var x in row){
+				if(colWidth[x]!=0){
+					str += '<td width="'+colWidth[x]+'px">';
+					str += '<div class="clickable" tabindex="-1"><center>';
+					
+					var cellData = row[x];
+					if(cellData == null || cellData == undefined || cellData == 'null')
+						cellData = '';
+					var cellType = 'textbox';
+					var col = colNames[x].split(':');
+					if(col.length>1)
+					{
+						if(col[1].trim()=='RT')
+							cellType = 'dropdown';
+						else if(col[1].trim()=='SSN')
+							cellType = 'ssn';
+					}
+					
+					if(cellType=='textbox')
+					{
+						str += getTextBox(colId[x],col[0],i,cellData,colWidth[x]);
+					}
+					if(cellType=='dropdown')
+					{
+						str += getDropDown(colId[x],col[0],i,cellData,col[2]);
+					}
+					if(cellType=='ssn')
+					{
+						str += getSSNField(colId[x],col[0],i,cellData);
+					}
+						
+					str += '</center></div></td>';
+				}
+			}
+			//column for add/delete button
+			str += '<td width="50px">';
+			str += '<div class="clickable" tabindex="-1"><center>';
+			str += getImage(rowCount++,i,tableNo);
+			str += '</center></div></td>';
+			str += '</tr>';
+		}
+	}
+	
+	return str;
+}
+
+function getImage(rowNum,index,tableNum)
+{
+	var str = '';
+	var action = '';
+	var imgType = 'minus';
+	if(rowNum==0)
+		imgType = 'plus';
+	if(imgType == 'minus'){
+		action = 'Click here to delete a row';
+	}else if(imgType == 'plus'){
+		action = 'Click here to add a row';
+	}
+	str += '<img src="/access/images/'+imgType+'.png" alt="'+action+'"';
+	str += ' onclick="onEdit(\''+(rowNum==0?'I':'D')+'\','+tableDataJSON['tableNumber']+','+index+');adjustDynaTableHeights(\''+divIds[tableNum]+'\',\''+(rowNum==0?'I':'D')+'\')"';
+	str += ' style="background-color:#4F81BD">';
+	
+	return str;
+}
+
+function getTextBox(colId,colName,rowNum,cellData,cellWidth)
+{
+	var str = '';	
+	str += '<input type="text" ';
+	str += 'id="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'" ';
+	str += 'name="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'" ';
+	str += 'title="'+colName+'" ';
+	str += 'value="'+cellData+'" ';
+	
+	if(maxlengths != null && maxlengths != undefined 
+			&& maxlengths[colNames.indexOf(colName)] != null && maxlengths[colNames.indexOf(colName)] != '')
+		str += 'maxlength="'+maxlengths[colNames.indexOf(colName)]+'" ';
+	
+	str += 'onchange="onEdit(\'U\',\''+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'\')" ';
+	str += 'class="form'+cellWidth+'">';
+	
+	return str;
+}
+
+function getSSNField(colId,colName,rowNum,cellData)
+{
+	var str = '';	
+	//hidden
+	str += '<input type="hidden" ';
+	str += 'id="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'" ';
+	str += 'name="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'" ';
+	str += 'title="'+colName+'" ';
+	str += 'value="'+cellData+'">';
+	
+	//box1
+	str += '<input type="text" ';
+	str += 'id="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'_1" ';
+	str += 'name="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'_1" ';
+	str += 'title="'+colName+'" ';
+	str += 'value="'+cellData.toString().substring(0,3)+'" ';
+	str += 'maxlength="3" ';
+	str += 'onchange="updateSSNField(\''+colId+'\','+tableDataJSON['tableNumber']+','+rowNum+');';
+	str += 'onEdit(\'U\',\''+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'\')" ';
+	str += 'class="form35">';
+	str += '-';
+	
+	//box2
+	str += '<input type="text" ';
+	str += 'id="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'_2" ';
+	str += 'name="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'_2" ';
+	str += 'title="'+colName+'" ';
+	str += 'value="'+cellData.toString().substring(3,5)+'" ';
+	str += 'maxlength="2" ';
+	str += 'onchange="updateSSNField(\''+colId+'\','+tableDataJSON['tableNumber']+','+rowNum+');';
+	str += 'onEdit(\'U\',\''+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'\')" ';
+	str += 'class="form35">';
+	str += '-';
+	
+	//box3
+	str += '<input type="text" ';
+	str += 'id="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'_3" ';
+	str += 'name="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'_3" ';
+	str += 'title="'+colName+'" ';
+	str += 'value="'+cellData.toString().substring(5)+'" ';
+	str += 'maxlength="4" ';
+	str += 'onchange="updateSSNField(\''+colId+'\','+tableDataJSON['tableNumber']+','+rowNum+');';
+	str += 'onEdit(\'U\',\''+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'\')" ';
+	str += 'class="form35">';
+	
+	return str;
+}
+
+function updateSSNField(fieldId,tableNo,rowNo)
+{
+	var ssnId = fieldId+"_"+tableNo+"_"+rowNo;
+	var ssn1 = document.getElementById(ssnId+"_1").value;
+	var ssn2 = document.getElementById(ssnId+"_2").value;
+	var ssn3 = document.getElementById(ssnId+"_3").value;
+	var ssn = "".concat(ssn1,ssn2,ssn3);
+	document.getElementById(ssnId).value = ssn;
+}
+
+function getRTInfo(rtTableName)
+{
+	for(var x in rtInfo)
+	{
+		if(rtInfo[x]["tableName"]==rtTableName)
+		{
+			return rtInfo[x];
+		}
+	}
+}
+
+function getDropDown(colId,colName,rowNum,cellData,rtTableName)
+{
+	var str = '';
+	str += '<select name="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'" ';
+	str += 'id="'+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'" ';
+	str += 'onchange="onEdit(\'U\',\''+colId+'_'+tableDataJSON['tableNumber']+'_'+rowNum+'\')" ';
+	str += 'title="'+colName+'" class="formNoStyle">';
+	var rt = getRTInfo(rtTableName);
+	var values = rt['values'];
+	var display = rt['display'];
+	for(var x in values)
+	{
+		str += '<option value="'+values[x]+'" ';
+		if(values[x]==cellData)
+			str += 'selected ';
+		str += 'title="'+display[x]+'">';
+		str += display[x];
+		str += '</option>';
+	}
+	str += '</select>';
+	return str;
+}
+
+function plusRow(tableNum)
+{
+	for(var x in fullJSON){
+		var tableNo = fullJSON[x]['tableNumber'];
+		if(tableNo==tableNum)
+		{
+			var maxRows = fullJSON[x]['maxRows'];
+			if(maxRows == null || maxRows == undefined || maxRows == 0)
+			{
+				maxRows = 1000;
+			}
+			var rows = fullJSON[x]['rowData'];
+			if(rows.length < maxRows)
+			{
+				var cols = fullJSON[x]['colId'];
+				var newRowArr = new Array();
+				for(var col in cols){
+					if(cols[col]=='rowid')
+					{
+						var newRowId = (parseInt(fullJSON[x]['maxRowId'])+1).toString();
+						newRowArr.push(newRowId);
+					}
+					else if(cols[col]=='sourceAppInd')
+					{
+						newRowArr.push(fullJSON[x]['sourceAppInd']);
+					}
+					else
+						newRowArr.push('');
+				}
+				fullJSON[x]['rowData'].push(newRowArr);
+				break;
+			}
+		}
+	}
+	
+	makeTableInHTML(x);
+}
+
+function minusRow(tableNum,rowNum)
+{
+	for(var x in fullJSON){
+		var tableNo = fullJSON[x]['tableNumber'];
+		if(tableNo==tableNum)
+		{
+			fullJSON[x]['rowData'].splice(rowNum,1);
+			break;
+		}
+	}
+	
+	makeTableInHTML(x);
+}
+
+function onEdit()
+{
+	var args = arguments;
+	var action = args[0].trim().toUpperCase();
+	if(action == 'D')
+	{
+		updateFullJSON();
+		var tableNum = args[1];
+		var rowNum = args[2];
+		var rowId = getRowId(tableNum,rowNum);
+		minusRow(tableNum,rowNum);
+		
+		for(var x in fullJSON){
+			var tableNo = fullJSON[x]['tableNumber'];
+			if(tableNo==tableNum)
+			{
+				break;
+			}
+		}
+		if(fullJSON[x]['insertedRows'].indexOf(rowId) != -1)
+		{
+			fullJSON[x]['insertedRows'].splice(fullJSON[x]['insertedRows'].indexOf(rowId),1);
+		}
+		if(fullJSON[x]['updatedRows'].indexOf(rowId) != -1)
+		{
+			fullJSON[x]['updatedRows'].splice(fullJSON[x]['updatedRows'].indexOf(rowId),1);
+			fullJSON[x]['deletedRows'].push(rowId);
+		}
+		if(fullJSON[x]['noChangeRows'].indexOf(rowId) != -1)
+		{
+			fullJSON[x]['noChangeRows'].splice(fullJSON[x]['noChangeRows'].indexOf(rowId),1);
+			fullJSON[x]['deletedRows'].push(rowId);
+		}
+	}
+	if(action == 'I')
+	{
+		updateFullJSON();
+		var tableNum = args[1];
+		var rowNum = args[2];
+		plusRow(tableNum);
+		var rowId = getMaxRowId(tableNum);
+		for(var x in fullJSON){
+			var tableNo = fullJSON[x]['tableNumber'];
+			if(tableNo==tableNum)
+			{
+				break;
+			}
+		}
+		fullJSON[x]['insertedRows'].push(rowId);		
+	}
+	if(action == 'U')
+	{
+		var fldId = args[1];
+		var colId = fldId.split('_')[0];
+		var tableNum = fldId.split('_')[1];
+		var rowNum = fldId.split('_')[2];
+		
+		var oldCellData = '';
+		for(var x in fullJSON){
+			var tableNo = fullJSON[x]['tableNumber'];
+			if(tableNo==tableNum)
+			{
+				var row = fullJSON[x]['rowData'][rowNum];
+				oldCellData = row[fullJSON[x]['colId'].indexOf(colId)];
+				break;
+			}
+		}
+		var newCellData = document.getElementById(fldId).value;
+		
+		var rowId = getRowId(tableNum,rowNum);
+		if(fullJSON[x]['noChangeRows'].indexOf(rowId) != -1 && oldCellData != newCellData)
+		{
+			fullJSON[x]['noChangeRows'].splice(fullJSON[x]['noChangeRows'].indexOf(rowId),1);
+			fullJSON[x]['updatedRows'].push(rowId);
+		}
+		updateFullJSON();
+	}
+}
+
+function getRowId(tableNum,rowNum)
+{
+	var rowId = '';
+	for(var x in fullJSON){
+		var tableNo = fullJSON[x]['tableNumber'];
+		if(tableNo==tableNum)
+		{
+			var row = fullJSON[x]['rowData'][rowNum];
+			var cols = fullJSON[x]['colId'];
+			for(var i in cols)
+			{
+				if(cols[i]=='rowid')
+					rowId = row[i];
+			}
+		}
+	}
+	return rowId;
+}
+
+function getMaxRowId(tableNum)
+{
+	for(var x in fullJSON){
+		var tableNo = fullJSON[x]['tableNumber'];
+		if(tableNo==tableNum)
+		{
+			return fullJSON[x]['maxRowId'];
+		}
+	}
+}
+
+function updateFullJSON()
+{
+	for(var x in fullJSON){
+		var tableNum = fullJSON[x]['tableNumber'];
+		var rows = fullJSON[x]['rowData'];
+		var cols = fullJSON[x]['colId'];
+		for(var rowNum in rows){
+			var row = rows[rowNum];
+			for(var cell in row){
+				if(document.getElementById(cols[cell]+"_"+tableNum+"_"+rowNum)!= null
+				&& document.getElementById(cols[cell]+"_"+tableNum+"_"+rowNum)!=undefined){
+					fullJSON[x]['rowData'][rowNum][cell] = document.getElementById(cols[cell]+"_"+tableNum+"_"+rowNum).value;
+				}
+			}
+		}
+	}
+}
+
+function makeTableInHTML(tableNo)
+{
+	init(tableNo);
+	var table = '<table>';
+	table += getTableHeader();
+	table += getTableRows(tableNo);
+	table += '</table>';
+	if(null != $("#"+divIds[tableNo]) && undefined != $("#"+divIds[tableNo])
+			&& null != $("#"+divIds[tableNo])[0] && undefined != $("#"+divIds[tableNo])[0])
+		$("#"+divIds[tableNo])[0].innerHTML=table;
+	
+	/*if(null != document.getElementById(divIds[tableNo]+"_l")){
+		$("#"+divIds[tableNo]+"_l").css('height',$("#"+divIds[tableNo]).height());
+	}*/
+}
+
+function start()
+{
+	if(null != document.getElementById("jsonText") || undefined != document.getElementById("jsonText"))
+	{
+		if(null != document.getElementById("jsonText").value || undefined != document.getElementById("jsonText").value
+		|| "" != document.getElementById("jsonText").value.trim())
+		{
+			var jsonText = document.getElementById("jsonText").value.trim();
+			setFullJSON(jsonText);
+			
+			if(null != document.getElementById("divIds") || undefined != document.getElementById("divIds"))
+			{
+				if(null != document.getElementById("divIds").value || undefined != document.getElementById("divIds").value
+				|| "" != document.getElementById("divIds").value.trim())
+				{
+					var divs = document.getElementById("divIds").value.trim().split(',');
+					for(var i=0; i<divIds.length; i++)
+					{
+						divIds[i] = divs[i].trim();
+						makeTableInHTML(i);
+						if(null != document.getElementById(divIds[i]+"_l")){
+							makeTableForLeftPanel(i,divIds[i]);
+						}
+						//adjustDynaTableHeights(divIds[i]);
+					}
+				}
+			}
+		}
+	}
+}
+
+function saveTableData()
+{
+	updateFullJSON();
+	document.getElementById("jsonText").value = JSON.stringify(fullJSON);
+}
+
+$(document).ready(function(){
+	start();
+});
+
+function clearTable(tableNum)
+{
+	for(var x in fullJSON){
+		var tableNo = fullJSON[x]['tableNumber'];
+		if(tableNo==tableNum)
+		{
+			//purge rowData
+			fullJSON[x]['rowData'].length=0;
+			
+			//create fresh row
+			plusRow(tableNum);
+			
+			//update deleted rows
+			for(var i in fullJSON[x]['updatedRows'])
+				fullJSON[x]['deletedRows'].push(fullJSON[x]['updatedRows'][i]);
+			for(var j in fullJSON[x]['noChangeRows'])
+				fullJSON[x]['deletedRows'].push(fullJSON[x]['noChangeRows'][j]);
+			
+			//purge inserted, updated and no change rows
+			fullJSON[x]['insertedRows'].length=0;
+			fullJSON[x]['updatedRows'].length=0;
+			fullJSON[x]['noChangeRows'].length=0;
+			
+			//adding new rowid to no change rows
+			fullJSON[x]['noChangeRows'].push(fullJSON[x]['maxRowId']);
+		}
+	}
+}
+
+function makeTableForLeftPanel(tableNo,divId){
+	init(tableNo);
+	var table = '<table>';
+	table += getLeftTableHeader();
+	table += getLeftTableRows(tableNo);
+	table += '</table>';
+	$("#"+divId+"_l")[0].innerHTML=table;
+	
+	//adjustDynaTableHeights(divId);
+}
+
+function getLeftTableHeader()
+{
+	var str = '';
+	str += '<tr>';
+	for(var x in colNames){
+		if(colWidth[x]!=0 && (leftPanelCols.includes(colId[x]))){
+			var colName = colNames[x].split(':')[0];
+			str += '<th width="'+colWidth[x]+'px" class="HeaderBar">';
+			str += '<div class="clickable" tabindex="-1"><center>';
+			str += colName;
+			str += '</center></div></th>';
+		}
+	}
+	str += '</tr>';
+	
+	return str;
+}
+
+function getLeftTableRows(tableNo)
+{
+	var str = '';
+	var rowCount = 0;
+	for(var i in rowData){
+		var row = rowData[i];
+		var sourceAppInd = row[colId.indexOf('sourceAppInd')];
+		if("CW" == sourceAppInd){
+			str += '<tr>';
+			for(var x in row){
+				if(colWidth[x]!=0 && (leftPanelCols.includes(colId[x]))){
+					str += '<td width="'+colWidth[x]+'px" style="word-wrap:break-word">';
+					
+					var cellData = row[x];
+					if(cellData == null || cellData == undefined || cellData == 'null')
+						cellData = '';
+					
+					str += cellData;
+					str += '</td>';
+				}
+			}
+			str += '</tr>';
+		}
+	}
+	
+	return str;
+}
+
+function adjustDynaTableHeights(){
+	var divId = arguments[0];
+	var plusMinus = "";
+	if(arguments.length>1)
+		plusMinus = arguments[1];
+	var leftPanelTableHeight = 0;
+	if(null != document.getElementById(divId+"_l"))
+		leftPanelTableHeight = $("#"+divId+"_l").height();
+	var mainTableHeight = $("#"+divId).height();
+	
+	if(leftPanelTableHeight < mainTableHeight){
+		if(plusMinus == 'D')
+			$("#"+divId+"_l").parent().parent().css("height",mainTableHeight);
+		else
+			$("#"+divId+"_l").parent().parent().css("height",$("#"+divId).parent().parent().height());
+	} else if(mainTableHeight < leftPanelTableHeight){
+		$("#"+divId).parent().parent().css("height",leftPanelTableHeight);
+	}
+}
