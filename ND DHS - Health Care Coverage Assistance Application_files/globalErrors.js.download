@@ -1,0 +1,1571 @@
+/******************************************************************************
+		File Name	: globalErrors.js		
+		Track		: FRAMEWORK
+		Functional	: GLOBAL
+		Description : Javascript Error functions used GLOBALLY
+		Functions	:	
+						function isComplete(field)   
+						function isAlpha(field) 
+						function isNumeric(field)
+						function isDecimal(field,dec,maxVal)
+						function isAlphaNumeric(field) 
+						function isStrictlyAlphaNumeric(field) 
+						function isMaxSet(field)
+						function isCurrency(FieldName)
+						function isAtleastOneComplete() 
+						function isOneComplete(field1,field2,label1,label2)
+						function joinFields(field1, field2, field3, targetField)
+						function joinFourFields(field1, field2, field3,field4, targetField)
+						function joinZip(field1, field2)
+						function validateName(field)
+						function isDateComplete(month,date,year)						
+						function validateDate(month,day,year)
+						function validateMonth(month) 
+						function validateDay(day) 
+						function validateYear(year) 
+						function createErrorMessage(month,day,year) 
+						function pastDate(month, day, year, targetField,dateString)
+						function pastDateInclusive(month, day, year, targetField,dateString)
+						function futureDate(month, day, year, targetField,dateString)
+						function compareDates(month1, day1, year1,month2,day2,year2,targetField,dateString1,dateString2)
+						function compareDatesInclusive(month1, day1, year1,month2,day2,year2,targetField,dateString1,dateString2)
+						function flZero(field)
+						function noSpace(field)
+						function checkMaxLength(FieldName,maxLimit) 
+						function isZero(field)
+						function checkSpecialChars(FieldName,maxLength,validChars,enter)
+						function chkAddress(str,frac,dir,stname,sttype,dweltype,dwelnum,adline2,county,city,state,country,zip5,region)
+						function checkMaxAllowed(field,maxVal)
+						function loadURL(frm,url,tgt)
+						function computeAge(mm, dd, yy,num)
+						function preventSpecialChars(FieldName,maxLength,inValidChars,enter)
+						function validateSSN(fld)
+						function isCompleteFields(elemIdArr,lOperator)
+						checkStNumber(field1,field2)
+						function requiredOnYes(field1, field2)
+						function requiredOnNo(field1, field2)
+						function requiredOnOther(field1, field2)
+						function invalidDateEntry(month1, day1, year1, month2, day2, year2)
+						function requiredIfEntered(field1, field2)
+						function invalidDateRange(month1, day1, year1, month2, day2, year2, month3, day3, year3)
+						function isAmountGreaterThan(field, amount)
+						function isInvalidFirstChar(field)
+						function invalidYesOnNo(field1, field2)
+						function invalidEntryOnYes(field1, field2)
+						function invalidEntryOnNo(field1, field2)
+
+		
+						
+/****************************************************************************************
+Global variables
+****************************************************************************************/
+var enterKey = false;
+var m = "";//Variable to store the value of the name of the date field.
+/*****************************************************************************************/
+//Function to validate that the Mandatory fields are complete
+function isComplete(field){   
+	if(field.disabled) return true;  
+	if( field.length>1){
+		if(field[0].type =="radio" || field[0].type =="checkbox"){
+			var num = 1;
+			if(field.length > 1){
+				if(field[0].type =="checkbox"){
+					var args = isComplete.arguments;
+					if(args!=null&&args.length>1&&args[1]!=null&&args[1]>1){
+					num = args[1];
+					}
+				}
+			}
+			var flg = isGroupChecked(field,num);
+				if(!flg){
+				alertMe('GL001',field[0]);
+				return false;
+			}
+		}
+		else if(field.type == "select-one" || field.type == "select-multiple" ){
+			if (!isDataComplete(field)) {
+				alertMe('GL038',field);
+				return false;
+			}
+		}
+	}
+	else if (!isDataComplete(field)) {
+ 		alertMe('GL001',field);
+	 	return false;
+   	}
+	return true;  
+}
+
+//Validates the form field element for alpha values. Allows spaces.
+function isAlpha(field) {
+	var lbl = field.name;
+  	var val = field.value;
+  	if (val==null || val.length==0) return true;
+	
+  	var rep2 = /[A-Za-z]+[a-z]*\s*[A-Za-z]*/;
+  	var rep = /[^A-Za-z\s]+/;
+  	var test = val.match(rep);
+  	var test2 = val.match(rep2);
+  	if ((test == null) && (test2!=null) && (val.charAt(0)!= " ")) {
+		return true; 
+  	} else { 
+    	alertMe('GL002',field);
+    	return false;
+  	}
+}
+
+// Validates the form field for the numeric value. 
+function isNumeric(field){
+	var thisValue = field.value;
+	if (!isInteger(thisValue)){
+			alertMe('GL003',field);
+			return false;
+	}
+	return true;
+}
+
+/*
+Function to check if the given number is a decimal.
+dec - number of decimal places allowed
+maxVal - Max value allowed
+*/
+function isDecimal(field,dec,maxVal){
+	var val = field.value;
+	
+	for (var i=0, len=val.length, valid='0123456789.' ; i<len ; i++) {
+		var substr = val.substring(i,i+1);
+		var substr1 = val.indexOf(substr);
+		var substr2 = len - substr1;
+			if (valid.indexOf(substr) == -1 || (substr=="." && substr2>dec+1) || (val>maxVal) ){
+            	alertMe('GL003',field);
+            	return false;
+       	 	}
+	   	}
+}
+
+//Validates the form field element for alpha numeric value. Allows spaces.
+function isAlphaNumeric(field) {
+	var val = field.value;
+  	if (val==null || val.length==0) return true;
+	if (isAlphaNumericData(field,val)) {       
+		return true; 
+  	} else { 
+    	alertMe('GL004',field );
+    	return false;
+  	}
+}
+
+//Validates the form field element for alpha numeric value. Does not allow spaces.
+function isStrictlyAlphaNumeric(field) {
+	var val = field.value;
+  	if (val==null || val.length==0) return true;
+	
+  	var rep2 = /[A-Za-z0-9]+([a-z]|[0-9])*\s*[A-Za-z0-9]*/;
+  	var rep = /[^A-Za-z0-9]+/;
+  	var test = val.match(rep);
+  	var test2 = val.match(rep2);
+  	if ((test == null) && (test2!=null) && (val.charAt(0)!= " ")) {
+		return true; 
+  	} else { 
+    	alertMe('GL005',field );
+    	return false;
+  	}
+}
+
+// This function checks if the value entered is equal to the maxLength specified. 
+function isMaxSet(field){
+	var val=field.value;
+	if(val==null || val.length <= 0) return true;
+	var maxLen=field.maxLength;
+	if(val.length < maxLen){
+		alertMe('GL006',field);
+		return false;
+	}
+	return true;
+}
+
+//Function ensures that the field entry is in the standard format for currency
+function isCurrency(FieldName){
+		var val = FieldName.value;
+		var disp = "currency";
+		flag=true;
+		if(arguments[1]!= null){
+			disp = arguments[1];
+		}
+		for (var i=0, len=val.length, valid='0123456789.' ; i<len ; i++) {
+		var substr = val.substring(i,i+1);
+		var substr1 = val.indexOf(substr);
+		var substr2 = len - substr1;
+			if (valid.indexOf(substr) == -1 || (substr=="." && flag==false) || (substr=="." && substr2>3) ){
+            	alertMe('GL007',disp,FieldName);
+            	return false;
+       	 	}
+       	 	if(substr == "."){
+       	 		flag=false; 
+       	 		if(substr2==1){
+       	 		FieldName.value = val+"00";
+       	 		}
+       	 		if(substr2==2){
+       	 		FieldName.value = val+"0";
+       	 		}
+				if(substr1==0){
+       	 		FieldName.value = "0"+val;
+       	 		}
+       	 		if(substr1==0 && substr2==2){
+       	 		FieldName.value = "0"+val+ "0";
+       	 		}
+       	 	 		
+       	 	} 
+       	 	if(FieldName.value==0){
+       	 	FieldName.value="0.00";
+       	 	}
+       	 	if(val.indexOf(".") == -1){
+       	 	FieldName.value= val+".00";
+       	 	}
+	   	}
+		return true;
+}
+	
+//This function validates that atleast one of the fields passed as arguments should be entered.
+function isAtleastOneComplete() {
+   var count = arguments.length;
+   var msg = "";
+   	for(i=0;i<count;i++){
+   		if (i < count-1){ 
+   			msg = msg +"'" +arguments[i].lblDesc+"', ";	
+   		}
+   		else if (i == count-1){
+   			msg = msg + "or '"+arguments[i].lblDesc+"' ";
+   		}
+   		if ( isDataComplete(arguments[i]) == true ) {
+	   		return true ;	
+		}
+   	}
+    alertMe('GL008',msg);
+	return false;
+}  
+
+// Given 2 fields, this function validates that atleast one field needs to be filled.
+function isOneComplete(field1,field2,label1,label2){
+
+	if (field1.type == "radio"){
+		flag = ((!field1.checked) && (!field2.checked));
+	}
+	else
+	{
+		flag = (field1.value =="" && field2.value =="");
+	}
+
+	if(flag){
+    	alertMe('GL009',label1,label2);
+    	return false;
+    }else{
+        return true;
+    }
+}
+
+// This function joins the three fields passed to it into one field in the order that they are passed.
+//validates for the date,if the text is entered in one box
+function joinFields(field1, field2, field3, targetField,flag){
+	var value1 = field1.value;
+	var value2 = field2.value;
+	var value3 = field3.value;
+	targetField.value = "";
+	var len=value1.length+value2.length+value3.length;	
+
+	if(arguments[4] == null){
+		flag = "N";
+	}
+	if(flag =="Y"){
+		if(value1 == "" && value2 =="" && value3 ==""){
+   		alertMe('GL001',targetField);
+		return false;		
+		}
+	}
+	if (len > 0 ){
+		//if( (value1.length < field1.maxLength) || (value2.length < field2.maxLength) || (value3.length < field3.maxLength) ){
+			//alertMe('GL029');
+			//return false;
+		//}
+	}
+	//if(len >= 9){
+		targetField.value = value1+value2+value3;
+	//}
+	return true;
+}
+ 
+/* 	add the following attribute to each field that neads to be joined (Three total). Replace targetField with the name of the hidden field.
+//	Replace textfield1, textfield2 and textfield3 with the name of the fields that need to be joined. Replace form1 with the
+//	name of the form which contains the fields.
+*/
+
+function joinFourFields(field1, field2, field3,field4,targetField,flag){
+	var value1 = field1.value;
+	var value2 = field2.value;
+	var value3 = field3.value;
+	var value4 = field4.value;
+	targetField.value = "";
+
+	var len=value1.length+value2.length+value3.length+value4.length;
+	
+	if(arguments[5] == null){
+		flag = "N";
+	}
+	if(flag =="Y"){
+		if(value1 == "" && value2 =="" && value3 =="" && value4 ==""){
+   		alertMe('GL001',targetField);
+		return false;		
+		}
+	}
+	if (len > 0 ){
+		if( (value1.length < field1.maxLength) || (value2.length < field2.maxLength) || (value3.length < field3.maxLength) ){
+			alertMe('GL010',field1);
+			return false;
+		}
+	}
+	if(len > 9 ){
+		targetField.value = value1+value2+value3+value4;
+	}
+	return true;
+}
+
+//Function to check that date is mandatory
+function isDateComplete(month,date,year){
+if(month.disabled && date.disabled && year.disabled)
+	return true;
+monthval = doTrim(month.value);
+dateval = doTrim(date.value);
+yearval = doTrim(year.value);
+var mm = "";
+	if ((monthval != null && monthval == "mm")||(monthval==null)) {
+		mm = mm+"month,";
+	}
+	if ((dateval != null && dateval == "dd")||(dateval==null)) {
+		mm = mm+"date,";
+	}
+	if ((yearval != null && yearval == "yyyy")||(yearval==null)) {
+		mm = mm+"year";
+  	}
+	if(mm!=""){
+			var args = isDateComplete.arguments;
+			if(args.length>3&&args[3]!=null&&!args[3]){
+				;
+			}
+			else{
+			    alertMe("GL010",month);
+			}
+			m = month;
+  			dateVal = true;
+		return false;
+  	}
+  	else
+  	{
+		m = "";
+  		dateVal = false;
+		return true;
+  	}
+  	return true;
+} 
+
+// 	Joins the Zip Fields.
+
+function joinZip(field1, field2){
+	var value1 = field1.value;
+	var value2 = field2.value;
+	var len=value1.length+value2.length;	
+	if (len == 4 && value1.length < field1.maxLength){
+		alertMe('GL011');
+		return false;
+	}
+	return true;
+}
+
+//Validates that the value entered is in a valid 'Name' format
+function validateName(field){
+	var val = field.value;
+	if (val==null || val.length==0) return true;
+	var rep2 = /[A-Za-z]*([a-z.\-\']|[0-9\-\'])*\s*[A-Za-z0-9\-\'.]*/;
+	var rep = /[^A-Za-z0-9\s\-\'.]+/;
+	var test = val.match(rep);
+	var test2 = val.match(rep2);
+	if ((test == null) && (test2!=null) && (val.charAt(0)!= " ")) {
+		var val1= val.substring(0,1);
+		val1= val1.toUpperCase();
+		var val2= val.substring(1);
+		field.value = val1+val2;
+		return true; 
+	} 
+	alertMe('GL012',field);
+	return false;
+}
+
+//Works to make function createErrorMessage to put the date together to make the createErrorMessage function work.
+function validateDate(month,day,year) {
+	var monthVal=month.value;
+	var dayVal=day.value;
+	if (dayVal=="disableDay") dayVal="01";
+	var yearVal=year.value;
+	var test = "";
+	
+  	if (validateMonth(month) && validateDay(day) && validateYear(year)) {
+		var thisDateStr = monthVal + "/ " + dayVal + "/ " + yearVal;
+
+		var thisDate = new Date( thisDateStr );
+	
+		var thisDateGMTString = thisDate.toGMTString();
+		var thisDatefinalarray = thisDateGMTString.split( " " );
+		var thisMonthNum = getMonthNumber(thisDatefinalarray[2]);
+		
+		if ( thisMonthNum == monthVal ) {
+			return true;
+		} else {
+			return createErrorMessage(month,day,year);
+		}
+		return true;
+  	}else{
+			if (! validateMonth(month) || ! validateDay(day) || ! validateYear(year)){
+				if(month.name != m.name){
+				alertMe("GL013",month);
+				dateVal = true;
+				}
+			}
+		return false;
+	}
+}
+
+//Validates the month.  Makes sure the month is within 1-12.  
+//Works with function createErrorMessage to show appropriate error message.
+function validateMonth(month) {
+	var monthval=month.value
+	var monthrep = /\D{1,2}/;
+	var test = monthrep.test(monthval);
+	if (test ||(monthval <=0 || monthval>12)) {
+		return false;
+	}
+	return true;
+}
+
+//This function validates the day from 1-31.  
+//This function works with createErrorMessage to pop the correct error message based on the amount of days in a certain month.
+function validateDay(day) {
+	var dayval=day.value;
+	var dayrep = /\D{1,2}/;
+	var test = dayrep.test(dayval);
+	if(dayval != "disableDay")
+	{
+	if (test ||(dayval <=0 || dayval>31)) {
+	    return false;
+	  }
+   }
+
+	return true;
+}
+
+//This function validates the year from 1001 to 5000.  
+function validateYear(year) {
+	var yearval=year.value;
+	var yearrep = /\D{1,4}/;
+	var test = yearrep.test(yearval);
+	if (test ||(yearval <1000 || yearval>5000)) {
+	    return false;
+	}
+	return true;
+}
+
+//This displays the correct error message, based on whether the month., day, or year is incorrect.
+function createErrorMessage(month,day,year) {
+	var monthVal=month.value;
+	var dayVal=day.value;
+	var yearVal=year.value;
+  	if(monthVal==2) {
+    	if (yearVal%4 ==0 && dayVal>29) {
+    		 dateVal = true;
+		 	 alertMe("GL017",month);
+			 return false;
+	    } else if (yearVal%4 !=0 && dayVal>28) {
+    		 dateVal = true;
+			  	alertMe("GL017",month);
+			 return false;
+	    }     
+	}else if ((monthVal==4 || monthVal == 6 || monthVal==9 || monthVal==11) && dayVal>30) {
+	 	dateVal = true;
+		alertMe("GL013",month);
+		return false;
+	}
+	return true;
+}
+
+/*The following 5 Generic Date functions were added by Malathi Manivannan on May 08, 2002
+1.Function to ensure that date cannot be past date. Today allowed.
+  targetField - is a hidden field used to combine the date fields to a single field for formatting and validating the date
+  dateString - is the label of the date field - is used for popping field specific alertMes
+  Date functions modified by Malathi on May 09, 2002 - to handle exception when dateString is undefined
+  Date functions modified by Malathi on May 14, 2002 - to handle exception when date is not mandatory
+*/
+function pastDate(month, day, year, targetField){
+	if(formatDate(month,day,year,targetField)==false) return false;
+	
+	var monthVal =month.value;
+	var dayVal = day.value;
+	if(dayVal=="disableDay") dayVal="01";
+   	var yearVal = year.value;
+	var Calendar = new Date();      
+	var today = getToday();  
+
+	if ((monthVal ==null && dayVal ==null && yearVal ==null) || (monthVal =="" && dayVal =="" && yearVal =="")) {
+		return true;
+  	} else {
+	  	var dateOne = new Date(yearVal, monthVal - 1, dayVal);
+  	}
+
+	if (today > dateOne){
+		alertMe('GL014',month);
+		return false;
+	}
+	return true;
+}
+
+//2. Function to ensure that date cannot be past date. Today not allowed
+function pastDateInclusive(month, day, year, targetField){
+	if(formatDate(month,day,year,targetField)==false) return false;
+	
+	var monthVal =month.value;
+	var dayVal = day.value;
+	if(dayVal=="disableDay") dayVal="01";
+   	var yearVal = year.value;
+	var Calendar = new Date();      
+	var today = getToday();  
+	if ((monthVal ==null && dayVal ==null && yearVal ==null) || (monthVal =="" && dayVal =="" && yearVal =="")) {
+		return true;
+  	} else {
+	  	var dateOne = new Date(yearVal, monthVal - 1, dayVal);
+  	}
+	
+	if (today >= dateOne){
+		alertMe('GL015',month);
+		return false;
+	}
+	return true;
+}
+
+//3. Function to ensure that date cannot be future date. Today allowed
+function futureDate(month, day, year, targetField){
+	if(formatDate(month,day,year,targetField)==false) return false;
+	
+    var monthVal = month.value;
+    var dayVal = day.value;
+    if(dayVal=="disableDay") dayVal="01";
+    var yearVal = year.value;
+	var Calendar = new Date();      
+	var today = getToday();  
+	
+	if ((monthVal ==null && dayVal ==null && yearVal ==null) || (monthVal =="" && dayVal =="" && yearVal =="")) {
+		return true;
+  	} else {
+	  	var dateOne = new Date(yearVal, monthVal - 1, dayVal);
+  	}
+	
+  	if (today < dateOne){
+		alertMe('GL016',month);
+		return false;
+	}
+	return true;
+}
+
+//4.Function to compare 2 dates. Not Inclusive
+function compareDates(month1, day1, year1,month2,day2,year2,targetField){
+	var tempTargetField = targetField.value;
+	var date1 = validateDates(month1, day1, year1,targetField);
+	var date2 = validateDates(month2,day2,year2,targetField);
+	if(dateVal == false){
+		if(date1==false){
+			dateVal = true;
+			alertMe("GL013",month1);
+		}
+  		if(date2==false){
+			dateVal = true;
+			alertMe("GL013",month2);
+		}
+	}
+	targetField.value = tempTargetField;
+	
+	if (date1 && date2)
+	{
+  	var month1Val = month1.value;
+  	var day1Val = day1.value;
+  	if(day1Val == "disableDay"){
+  		day1Val = "01";
+  	}
+  	var year1Val = year1.value;
+  	var month2Val = month2.value;
+  	var day2Val = day2.value;
+  	if(day2Val == "disableDay"){
+  		day2Val = "01";
+  	}
+  	var year2Val = year2.value;
+  
+  	if ((month1Val ==null && day1Val ==null && year1Val ==null) || (month1Val =="" && day1Val =="" && year1Val =="")) {
+		return true;
+  	} else {
+	  	var dateOne = new Date(year1Val, month1Val - 1, day1Val);
+  	}
+	
+  	if ((month2Val ==null && day2Val ==null && year2Val ==null) || (month2Val =="" && day2Val =="" && year2Val =="")) {
+		return true;
+  	} else {
+	  	var dateTwo = new Date(year2Val, month2Val - 1, day2Val);
+  	}
+  
+ 	if(dateOne < dateTwo){
+  		alertMe('GL017',month1,month2);
+    return false;
+ 	} 
+	}
+return true;
+}
+
+//5.Function to compare 2 dates. Inclusive
+function compareDatesInclusive(month1, day1, year1,month2,day2,year2,targetField){
+	var tempTargetField = targetField.value;
+	var date1 = validateDates(month1, day1, year1,targetField);
+	var date2 = validateDates(month2,day2,year2,targetField);
+	if(dateVal == false){
+		if(date1==false){
+			dateVal = true;
+			alertMe("GL017",month1);
+		}
+  		if(date2==false){
+			dateVal = true;
+			alertMe("GL017",month2);
+		}
+	}
+	targetField.value = tempTargetField;	
+
+	if (date1 && date2)
+	{
+  	var month1Val = month1.value;
+  	var day1Val = day1.value;
+  	if(day1Val == "disableDay"){
+  		day1Val = "01";
+  	}
+  	var year1Val = year1.value;
+  	var month2Val = month2.value;
+  	var day2Val = day2.value;
+  	if(day2Val == "disableDay"){
+  		day2Val = "01";
+  	}
+  	var year2Val = year2.value;
+  
+  	if ((month1Val ==null && day1Val ==null && year1Val ==null) || (month1Val =="" && day1Val =="" && year1Val =="")) {
+		return true;
+  	} else {
+	  	var dateOne = new Date(year1Val, month1Val - 1, day1Val);
+  	}
+	
+  	if ((month2Val ==null && day2Val ==null && year2Val ==null) || (month2Val =="" && day2Val =="" && year2Val =="")) {
+		return true;
+  	} else {
+	  	var dateTwo = new Date(year2Val, month2Val - 1, day2Val);
+  	}
+  
+ 	if(dateOne <= dateTwo){
+  		alertMe('GL018',month1,month2);
+		return false;
+ 	} 
+	}
+return true;
+}
+
+//Function to validate that field value can't start with zero
+function flZero(field){
+	var thisValue = field.value;
+	var name = field.name;
+	var thisLength = field.value.length;
+	for (var i = 0; i != thisLength; i++){
+		aChar = thisValue.charAt(0);
+		if(aChar == "0"){
+		alertMe('GL019',field);
+		return false;
+		}
+	}
+	return true;
+  }
+
+//Function to validate that the field value doesn't have leading spaces
+function noSpace(field){
+	var val = field.value;
+	if (val.charAt(0)==" ") {
+	alertMe('GL020',field);
+	return false;}
+	else return true;
+}
+
+//Function checks the MaxLength of the textArea.
+function checkMaxLength(FieldName,maxLimit) {
+	var val = FieldName.value;
+		if (FieldName.value.length > maxLimit) 
+		{
+			alertMe('GL021',maxLimit,FieldName);
+			return false;
+		}
+		return true;
+}
+
+//Function to validate that field value can't be zero
+function isZero(field) {
+	if(field.value == "") return true;
+	thisValue = field.value;
+	ret = isNumeric(field);
+	if(!ret) {
+		return false;
+	}
+	else
+	{
+		res = parseInt(thisValue, 10)
+		if(res == "0") {
+			alertMe('GL022',field);
+			return false;
+		}
+	} 
+	return true;
+}
+
+//Function used to ensure that the characters entered in the textarea are either AlphaNumeric or
+// the special characters given.If 'enter' = 'Y' then enter will be allowed.
+function checkSpecialChars(FieldName,maxLength,validChars,enter) {
+	var val = FieldName.value;
+	for (var i=0, len= FieldName.value.length, valid=validChars ; i<len ; i++) {
+	var substr = val.substring(i,i+1);
+		if (valid.indexOf(substr) == -1){
+			if(substr < "0" || substr > "9" ){
+				if (substr < "a" || substr > "z"){
+					if (substr < "A" || substr > "Z"){
+						if(enter == "Y"){
+							if(substr != '\r' && substr != '\n'){
+								alertMe('GL023',FieldName);
+       							return false;
+							}
+						}
+						else
+						{
+							alertMe('GL023',FieldName);
+       						return false;
+       					}
+           			}
+          		}
+           	}
+   	 	}
+  	}
+  	return checkMaxLength(FieldName,maxLength);
+}
+
+/*
+This function validates the address tag.If any one of the fields other than street name, city,state and zip is 
+entered it will throw error.
+If none of the fields are entered in the address tag it will not throw any error.
+*/
+
+function chkAddress(str,frac,dir,stname,sttype,dweltype,dwelnum,adline2,county,city,state,country,zip5,region) {
+
+var str1       = doTrim(str.value);
+var frac1      = doTrim(frac.value);
+var dir1       = doTrim(dir.value); 
+var stname1    = doTrim(stname.value);
+var sttype1    = doTrim(sttype.value);
+var dweltype1  = doTrim(dweltype.value);
+var dwelnum1   = doTrim(dwelnum.value);
+var adline21   = doTrim(adline2.value);
+var county1    = doTrim(county.value);
+if(county1 == 'noSuchField') county1="";
+var city1      = doTrim(city.value);
+var state1     =  doTrim(state.value);
+var country1   =  doTrim(country.value);
+if(country1 == 'noSuchField') country1="";
+var zip51       = doTrim(zip5.value);
+var region1       = doTrim(region.value);
+if(region1 == 'noSuchField') region1="";
+
+if ( (str1==""  || str1==null)        &&  (frac1==""  || frac1==null) &&  (dir1==""  || dir1==null)  &&(sttype1==""  || sttype1== null) &&  
+	(dweltype1=="" || dweltype1==null) && (dwelnum1=="" ||dwelnum1==null )&&  (adline21=="" || adline21== null) &&  (county1=="" || county1== null ) && 
+	(country1=="" || country1==null) && (stname1=="" || stname1==null ) &&  (city1=="" || city1==null)&& (state1=="" || state1== null) && 
+	(zip51==""  || zip51== null) && (region1==""  || region1== null)) {
+		return true;
+}
+else if ( str1  != null  || frac1    != null || dir1     != null || sttype1 != null || dweltype1 != null || dwelnum1 != null || adline21 != null ||
+	county1 != null || country1  != null || stname1  != null|| city1    != null || state1  != null || zip51     != null || region1 != null) {
+		if(stname1 != null && city1 != null && state1 != null && zip51 != null) {
+	    	return true;
+		}
+		else 
+		{
+			alertMe('GL024');
+			return false;
+		}
+}
+
+} 
+
+//Function to check that the field value does not exceed the max value specified
+function checkMaxAllowed(field,maxVal){
+var val = field.value;
+var ret = isNumeric(field);
+	if (! ret) return false;
+	if(ret && val>maxVal){
+		alertMe("GL025",field,maxVal);
+		return false;
+	}
+	return true;
+}
+
+
+
+//Function to validate that age cannot be greater than 120 years
+function computeAge(mm, dd, yy,num){
+  var t, mon, day, year, DD, MM, YY, age;
+  if(validateDates(mm,dd,yy))
+  {
+  	YY   = parseInt(yy.value);	// year of birth (4 digits)
+  	MM   = parseInt(mm.value);	// month of birth (1-12)
+  	DD   = parseInt(dd.value);	// date of birth (1-31)
+  	t    = getToday();	// get current date
+  	year = t.getFullYear();	
+  	mon  = t.getMonth() + 1;
+  	day  = t.getDate();	
+  
+  	age = year - YY;
+
+  	if ((MM > mon) || (MM == mon && day < DD)) age --;
+
+  	if(age<0){
+  		alertMe("GL016",mm);
+  		return false;
+  	}
+  	
+  	if(age > 120){
+  		alertMe("GL027",mm,num);
+  		return false;
+  	}
+  }
+  return true;
+}
+
+//Function to prevent the occurence of the given special chars in the field
+function preventSpecialChars(FieldName,maxLength,inValidChars,enter) {
+	var val = FieldName.value;
+	for (var i=0, len= FieldName.value.length, inValid=inValidChars ; i<len ; i++) {
+	var substr = val.substring(i,i+1);
+		if (inValid.indexOf(substr) != -1){
+			alertMe('GL028',inValidChars,FieldName);
+			return false;
+		}
+ 	}
+  	return checkMaxLength(FieldName,maxLength);
+}
+
+//Function to validate SSN
+function validateSSN(fld,mn,yr){
+	var res, first, firstInt, sec, secInt, last, lastInt;
+	var val = fld.value;
+	var args = validateSSN.arguments.length;
+	if(val == "") return true;
+		
+	if(isNumeric(fld) == true && val.length == 9 ){
+		res = parseInt(val, 10);
+		first = val.substring(0,3);
+		firstInt = parseInt(first, 10);
+		sec = val.substring(3,5);
+		secInt = parseInt(sec, 10);
+		last = val.substring(5);
+		lastInt = parseInt(last, 10);	
+
+		if(res =="0"){
+			alertMe('GL022',fld);
+			return false;
+		}
+		if(firstInt < 0 || firstInt > 728 || firstInt == 588 || secInt == 0 || lastInt == 0 || val == "111111111" || val == "333333333" || val == "666666666" || val == "010101010" || val == "123456789"){
+			alertMe("GL029");
+			return false;
+		}
+		
+		if(yr != "" && mn != ""){
+			if((val == "222222222" && mn != "1" && yr != "1937") || (val == "444444444" && mn != "0" && yr != "1914") || (val == "555555555" && mn != "11" && yr != "1976") ){
+				alertMe("GL029");
+				return false;
+			}
+		}
+				
+		if(args > 3 && arguments[3] != null){
+			return confirmEntry(fld,arguments[3]);
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return true;
+}
+
+	function isCompleteFields(elemIdArr,lOperator){	
+	var errElemIds = new Array();	
+	var alertOr = false;
+	for(var j=0;j<elemIdArr.length;j++){		
+		if(document.getElementById(elemIdArr[j])==null){			
+			return false;
+		}
+		var flag = isDataComplete(document.getElementById(elemIdArr[j]));		
+		if(lOperator=="AND"){//All fields			
+			if(!flag){
+				errElemIds.push(elemIdArr[j]);
+			}
+		}
+		else if(lOperator=="OR"){//Atleast one field			
+			if(flag){
+				return true;	
+			}
+			else{
+				alertOr =true;
+			}
+		}
+	}	
+		if(lOperator=="OR"&&alertOr){
+			errElemIds = elemIdArr;
+		}
+		if(errElemIds.length>1){
+			var msg = getElementLabels(errElemIds);
+			if(lOperator=="OR"){
+				alertMe("GL031", msg);
+			}
+			else if(lOperator=="AND"){
+				alertMe("GL032", msg);
+			}
+
+			return false;
+		}
+		return true;
+}
+
+function checkStNumber(field1,field2){
+;
+}
+
+
+// Functions added on 06/01 for Cares Worker Web
+
+//Function validates the condition where if field1 is entered then field2 is required
+
+
+//Function validates the condition where field2 is required when Yes or Y in selected in field1. 
+//Field 1 is assumed to be select list.
+function requiredOnYes(field1, field2)
+{
+	//alert("hello")
+	var selected = field1.value;
+	if(selected != "yes" && selected != "Yes" && selected != "Y" && selected != "YES"){
+		return true;
+		//alert("N/A");
+	}
+	if(field2.type == "select-one")
+	{
+		if(field2.selectedIndex == 0){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "text")
+	{
+		if(field2.value == ""){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "checkbox" || field2.type == "radio")
+	{
+		if(field2.checked == false){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+}
+
+//Function validates the condition where field2 is required when No or N in selected in field1. 
+//Field 1 is assumed to be select list.
+function requiredOnNo(field1, field2)
+{
+	//alert("hello")
+	var selected = field1.value;
+	if(selected != "no" && selected != "No" && selected != "N" && selected != "NO"){
+		return true;
+		//alert("N/A");
+	}
+	if(field2.type == "select-one")
+	{
+		if(field2.selectedIndex == 0){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "text")
+	{
+		if(field2.value == ""){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "checkbox" || field2.type == "radio")
+	{
+		if(field2.checked == false){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+}
+
+//Function validates the condition where field2 is required when Other in selected in field1. 
+//Field 1 is assumed to be select list.
+function requiredOnOther(field1, field2)
+{
+	//alert("hello")
+	var selected = field1.value;
+	if(selected != "Other"){
+		return true;
+		//alert("N/A");
+	}
+	//alert(field2.type)
+	if(field2.type == "select-one")
+	{
+		if(field2.selectedIndex == 0){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "text")
+	{
+		if(field2.value == ""){
+		//alert(field2.type)
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "checkbox" || field2.type == "radio")
+	{
+		if(field2.checked == false){
+			alertMe('GL033',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+}
+
+//Function validates the condition where date2 is incorrectly entered when date1 is not entered. 
+function invalidDateEntry(month1, day1, year1, month2, day2, year2){
+  		var month1Val = month1.value;
+  		var day1Val = day1.value;
+  		if(day1Val == "disableDay")
+  		{
+  			day1Val = "1";
+  		}
+  		var year1Val = year1.value;
+  		
+  		var month2Val = month2.value;
+  		var day2Val = day2.value;
+  		if(day2Val == "disableDay")
+  		{
+  			day2Val = "1";
+  		}
+  		var year2Val = year2.value;
+  
+  	 if ((month1Val==null && day1Val==null && year1Val==null) || (month1Val=="" && day1Val=="" && year1Val=="")) {
+		if((month2Val!=null || day2Val!=null || year2Val!=null) && (month2Val!="" || day2Val!="" || year2Val!="")){
+			alertMe('GL034',month2,month1);
+			return false;
+		}
+	 }
+	return true;
+}
+
+function requiredIfEntered(field1, field2)
+{
+	if(field1.type == "select-one")
+	{
+		alert(field1.type);
+		alert(field2.type);
+		if(field1.selectedIndex != 0){
+			if(field2.type == "text"){
+				if(field2.value == ""){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}
+			}
+			else if(field2.type == "checkbox" || field2.type =="radio"){
+
+				if(field2.checked == false){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}
+			}
+			else if(field2.type == "select-one"){
+				if(field2.selectedIndex == 0){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}	 
+		}
+	  }
+    }
+	else if(field1.type == "text")
+	{
+		//alert(field1.type);
+		//alert(field2.type);
+		if(field1.value != ""){
+			if(field2.type == "text"){
+				if(field2.value == ""){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}
+			}
+			else if(field2.type == "checkbox" || field2.type =="radio"){
+
+				if(field2.checked == false){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}
+			}
+			else if(field2.type == "select-one"){
+				if(field2.selectedIndex == 0){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}	 
+		}
+	 }
+    }
+    else if(field2.type == "checkbox" || field2.type =="radio")
+	{
+		//alert(field1.type);
+		//alert(field2.type);
+		if(field2.checked == true){
+			if(field2.type == "text"){
+				if(field2.value == ""){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}
+			}
+			else if(field2.type == "checkbox" || field2.type =="radio"){
+
+				if(field2.checked == false){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}
+			}
+			else if(field2.type == "select-one"){
+				if(field2.selectedIndex == 0){
+					alertMe('GL036',field1, field2);
+					return false;
+				}
+				else{return true;}	 
+		}
+	 }
+  }
+} 
+
+
+
+//Function validates the condition where date2 is incorrectly entered when date1 is not entered. 
+function invalidDateRange(month1, day1, year1, month2, day2, year2, month3, day3, year3){
+	var date1 = validateDates(month1, day1, year1);
+	var date2 = validateDates(month2, day2, year2);
+	var date3 = validateDates(month3, day3, year3);
+	if(dateVal == false){
+		if(date1==false){
+			dateVal = true;
+			alertMe("GL013",month1);
+		}
+  		if(date2==false){
+			dateVal = true;
+			alertMe("GL013",month2);
+		}
+		if(date3==false){
+			dateVal = true;
+			alertMe("GL013",month3);
+		}
+	}
+	if (date1 && date2 && date3)
+	{
+	  	var month1Val = month1.value;
+	  	var day1Val = day1.value;
+	  	if(day1Val == "disableDay"){
+	  		day1Val = "1";
+	  	}
+	  	var year1Val = year1.value;
+	  	
+	  	var month2Val = month2.value;
+	  	var day2Val = day2.value;
+	  	if(day2Val == "disableDay"){
+	  		day2Val = "1";
+	  	}
+	  	var year2Val = year1.value;
+	  	
+	  	var month3Val = month3.value;
+	  	var day3Val = day3.value;
+	  	if(day3Val == "disableDay"){
+	  		day3Val = "1";
+	  	}
+	  	var year3Val = year3.value;
+	  
+	  	if ((month1Val ==null && day1Val ==null && year1Val ==null) || (month1Val =="" && day1Val =="" && year1Val =="")) {
+			return true;
+	  	} else {
+		  	var dateOne = new Date(year1Val, month1Val - 1, day1Val);
+	  	}
+		
+	  	if ((month2Val ==null && day2Val ==null && year2Val ==null) || (month2Val =="" && day2Val =="" && year2Val =="")) {
+			return true;
+	  	} else {
+		  	var dateTwo = new Date(year2Val, month2Val - 1, day2Val);
+	  	}
+	  	
+	  	if ((month3Val ==null && day3Val ==null && year3Val ==null) || (month3Val =="" && day3Val =="" && year3Val =="")) {
+			return true;
+	  	} else {
+		  	var dateThree = new Date(year3Val, month3Val - 1, day3Val);
+	  	}
+	  	//alert("date1 " + dateOne);
+	  	//alert("date2 " + dateTwo);
+	  	//alert("date3 " + dateThree);
+	 	if((dateOne < dateTwo) || (dateOne > dateThree)){
+	  		alertMe('GL037',month1,month2,month3);
+	    	return false;
+	 	} 
+	}
+	return true;
+}
+
+// Function validates if the the amount entered is greater than the allowed value
+function isAmountGreaterThan(field, amount)
+{
+	if(field.value > amount)
+	{
+		alertMe('GL039',amount);
+		return false;
+	}
+	else{return true;}
+}
+
+// Function validates if the first char if the first/last name is numeric or space and returns error
+function isInvalidFirstChar(field)
+{
+	var tempVal = field.value;
+	var firstChar = tempVal.charAt(0);
+	//alert(firstChar);
+	if (isInteger(firstChar) || firstChar == ' ')
+	{
+		alertMe('GL040',field);
+		return false;
+	}
+	else{return true;}
+}
+
+
+//Function validates the condition where field2 is invalidly entered as Yes or Y when No or N in selected in field1. 
+//Field 1 and Field2 are assumed to be select lists.
+function invalidYesOnNo(field1, field2)
+{
+	//alert(field1.value);
+	//alert(field2.value);
+	var selected = field1.value;
+	if(selected != "no" && selected != "No" && selected != "N" && selected !="NO"){
+		return true;
+		alert("N/A");
+	}
+	if(field2.value == "Yes" || field2.value == "Y" || field2.value == "YES"){
+		alertMe('GL042',field2, field1);
+		return false;
+	}
+	else{return true;}
+}
+
+
+//Function validates the condition where field2 is incorrectly entered when No or N in selected in field1. 
+//Field 1 is assumed to be select list.
+function invalidEntryOnNo(field1, field2)
+{
+	//alert("hello")
+	var selected = field1.value;
+	if(selected != "no" && selected != "No" && selected != "N" && selected !="NO"){
+		return true;
+		//alert("N/A");
+	}
+	if(field2.type == "select-one")
+	{
+		if(field2.selectedIndex != 0){
+			alertMe('GL043',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "text")
+	{
+		if(field2.value != ""){
+			alertMe('GL043',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "checkbox" || field2.type == "radio")
+	{
+		if(field2.checked == true){
+			alertMe('GL043',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+}
+
+//Function validates the condition where field2 is incorrectly entered when Yes or Y in selected in field1. 
+//Field 1 is assumed to be select list.
+function invalidEntryOnYes(field1, field2)
+{
+	//alert("hello")
+	//alert(field2.type)
+	var selected = field1.value;
+	if(selected != "yes" && selected != "Yes" && selected != "Y" && selected != "YES"){
+		return true;
+		//alert("N/A");
+	}
+	if(field2.type == "select-one")
+	{
+		if(field2.selectedIndex != 0){
+			alertMe('GL043',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "text")
+	{
+		if(field2.value != ""){
+			alertMe('GL043',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+	else if(field2.type == "checkbox" || field2.type == "radio")
+	{
+		if(field2.checked == true){
+			alertMe('GL043',field2, field1, selected);
+			return false;
+		}
+		else{return true;}
+	}
+}
+/*
+	Function to check if the dynasection has data and if there is no data to throw the message
+*/
+function checkIfDynaSectionHasData(dSectionArray){
+	var dSectionHasData = dynaSectionHasData(dSectionArray);
+	if(dSectionHasData == false){
+		clearMessages();
+		alertMeDynaSection('GL120');
+		return false;
+	}else{
+		return true;
+	}
+}
+/*
+Function to check if the field is Amount
+*/
+function isCurrencyField(cur){
+if(cur != null){
+	var curr = document.getElementById("currency"+cur.name);	
+	if(curr == null){
+		curr = document.getByName("currency"+cur.name);
+	}
+
+	var dec   = document.getElementById("decimal"+cur.name);
+	if(dec== null){
+		dec= document.getByName("decimal"+cur.name);
+	}
+
+	if(curr != null && dec != null){
+		return true;
+	}else{
+		return false;
+	}
+}
+return true;
+}
+/*
+Function to check if the dynasection has data
+*/
+function dynaSectionHasData(dSectionArray){
+var size = dSectionArray.length;
+for(var y=0;y<size;y++){
+	var arr = dSectionArray[y];
+	var siz = arr.length;
+	var empty =0;
+	for(var z=0;z<siz;z++){
+		var fld = document.getElementById(arr[z]);
+	
+		
+		if(fld == null){
+			fld = document.getByName(arr[z]);
+		}
+		
+
+		var comp;
+		if(fld.type != "radio" && fld.type != "checkbox"){
+			if(isDateField(fld)){
+				var mmElem = document.getElementById("month"+fld.name);
+				
+				
+				if( mmElem == null){
+					 mmElem= document.getByName("month"+fld.name);
+				}
+				
+
+				var ddElem = document.getElementById("date"+fld.name);
+				if(ddElem  == null){
+					ddElem = document.getByName("date"+fld.name);
+				}
+				
+				
+				var yyElem = document.getElementById("year"+fld.name);
+				if(yyElem  == null){
+					yyElem = document.getByName("year"+fld.name);
+				}
+				comp = isDateComplete(mmElem,ddElem,yyElem,false);
+			}else if(isCurrencyField(fld)){
+				var curr = document.getElementById("currency"+fld.name);
+				if( curr  == null){
+					 curr= document.getByName("currency"+fld.name);
+				}
+	 			var dec   = document.getElementById("decimal"+fld.name);
+	 			if( dec  == null){
+	 				dec= document.getByName("decimal"+fld.name);
+				}
+				if(isData(curr) || isData(dec)){
+					comp = true;	
+				}else{
+					comp = false;
+				}
+			}else{
+				comp = isData(fld);
+			}				
+		}else{
+			var chk = eval("document.form1."+fld.name);
+			comp = isGroupChecked(chk,"1");
+		}
+		if(comp){
+			break;
+		}else{
+			empty++;
+			continue;
+		}
+	}
+	if(empty == siz){
+		return false;
+	}else{
+		continue;
+	}
+}
+return true;
+}
+
+/*
+Function to check if the field is date
+*/
+function isDateField(dte){
+if(dte != null){
+	var mnth = document.getElementById("month"+dte.name);
+	if(mnth == null){
+		mnth = document.getByName("month"+dte.name);
+	}
+	var dt   = document.getElementById("date"+dte.name);
+	if(dt == null){
+		dt = document.getByName("date"+dte.name);
+	}	
+	var yr   = document.getElementById("year"+dte.name);
+	if(yr == null){
+		yr = document.getByName("year"+dte.name);
+	}	
+
+	if(mnth != null && dt != null && yr != null){
+		return true;
+	}else{
+		return false;
+	}
+}
+return true;
+}
+
+
+/*
+Function to validate and set the corresponding action for 'Add' button click in Dynasection
+*/
+function dynaSectionAdd(dynaSectionArray,dynaSectionName,dynaSectionAddPageAction){
+if(checkIfDynaSectionHasData(dynaSectionArray)){
+	var fld = document.getElementById("DYNA_SECTION_COLLECTION_NAME");
+
+	
+	if(fld == null){
+		fld = document.getByName("DYNA_SECTION_COLLECTION_NAME");
+	}
+	
+
+	
+	
+
+	setFieldValue(fld,dynaSectionName);
+	return setActionFieldAndSubmit(document.form1,dynaSectionAddPageAction,'Y');
+}else{
+	return false;
+}
+return true;
+}
+
+
+/********************************************************************
+*	Name		:	isGroupChecked()
+*	Description :	Function to validate the Program selection
+*					and ensure that atleast one programs is selected
+*	param1		:	grpElem
+*	param2		:	chkNum - the number of elements(radio/checkbox) 
+*					that should be checked
+*	returns		:	boolean
+*********************************************************************/
+	function isGroupChecked(grpElem, chkNum){
+		var cnt = 0;
+		if(grpElem==null){
+			return false;
+		}
+		var len = grpElem.length;
+		if(len>0){
+			for(var i=0;i<len;i++){					
+				if(grpElem[i].checked){				
+					cnt++;					
+				}					
+			}			
+		}else{
+			if(grpElem.checked){				
+				cnt++;		
+			}			
+		}
+		if(cnt>=chkNum){
+			return true;
+		}else{
+			return false;
+		}
+	}
